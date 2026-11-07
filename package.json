@@ -1,0 +1,12 @@
+{
+  "name": "lingo-language-practice",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local-first language flashcard PWA with optional Firebase sync",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test",
+    "icons": "node scripts/make-icons.mjs"
+  }
+}

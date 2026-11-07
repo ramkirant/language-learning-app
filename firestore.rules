@@ -1,0 +1,54 @@
+rules_version = '2';
+
+// Lingo security rules. Publish in: Firebase console -> Firestore Database -> Rules.
+//
+// Access is decided by the profile document users/{uid}, which only admins can create or change:
+//   { username: "ram", role: "admin" | "learner", active: true | false }
+// Anyone can create a Firebase login with the public web config, but without an active profile
+// document they can read and write nothing.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function hasProfile() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    function profile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isActive() {
+      return hasProfile() && profile().active == true;
+    }
+    function isAdmin() {
+      return isActive() && profile().role == 'admin';
+    }
+
+    // Profiles: you can read your own (so the app can tell you are deactivated); admins manage all.
+    match /users/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+
+      // Your own progress and settings.
+      match /languages/{lang}/progress/{id} {
+        allow read, write: if isActive() && request.auth.uid == uid;
+      }
+      match /meta/{doc} {
+        allow read, write: if isActive() && request.auth.uid == uid;
+      }
+    }
+
+    // Shared decks: everyone active can read, only admins can change.
+    match /languages/{lang} {
+      allow read: if isActive();
+      allow write: if isAdmin();
+
+      match /items/{item} {
+        allow read: if isActive();
+        allow write: if isAdmin();
+      }
+    }
+  }
+}
