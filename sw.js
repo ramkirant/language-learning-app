@@ -1,8 +1,9 @@
 // Service worker: makes the app load and run offline.
-// - App files: network first (always fresh when online, 3 s timeout), cached copy when offline.
+// - App files: network first, revalidated with the server on every load (GitHub Pages sends
+//   max-age=600, so a plain fetch could show a 10-minute-old copy), cached copy only when offline / slow.
 // - Firebase SDK from gstatic (versioned, immutable): cache first.
 // - Firestore / Auth API calls are never touched here.
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL = `lingo-shell-${VERSION}`;
 const SDK_CACHE = `lingo-sdk-${VERSION}`;
 
@@ -33,8 +34,8 @@ function networkFirst(request) {
     const fallback = () => caches.match(request, { ignoreSearch: true })
       .then((hit) => hit || (request.mode === 'navigate' ? caches.match('index.html') : undefined))
       .then((hit) => resolve(hit || Response.error()));
-    const timer = setTimeout(fallback, 3000);
-    fetch(request).then((res) => {
+    const timer = setTimeout(fallback, 4000);
+    fetch(request, { cache: 'no-cache' }).then((res) => {
       clearTimeout(timer);
       if (res.ok) { const copy = res.clone(); caches.open(SHELL).then((c) => c.put(request, copy)); }
       resolve(res);
