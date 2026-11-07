@@ -27,14 +27,19 @@ export function mount(root) {
         ${error ? `<p class="err-text">${esc(error)}</p>` : ''}
         ${loading ? '<p class="muted">Loading...</p>' : `<div class="utable">
           <div class="urow uhead"><span>User</span><span>Role</span><span>Status</span><span class="uact"></span></div>
-          ${users.map((u) => `<div class="urow">
+          ${users.map((u) => {
+            const lone = u.role === 'admin' && u.active !== false && activeAdmins().length <= 1;
+            const noOff = lone || u.uid === me.uid;
+            const why = lone ? 'The only active admin cannot be changed' : 'You cannot deactivate yourself';
+            return `<div class="urow">
             <b class="uname">${esc(u.username)}${u.uid === me.uid ? ' (you)' : ''}</b>
             <span class="badge">${esc(u.role)}</span>
             <span class="badge ${u.active === false ? 'off' : ''}">${u.active === false ? 'inactive' : 'active'}</span>
             <span class="uact">
-              <button class="btn small" data-role="${esc(u.uid)}">${u.role === 'admin' ? 'Make learner' : 'Make admin'}</button>
-              <button class="btn small ${u.active === false ? '' : 'danger'}" data-active="${esc(u.uid)}">${u.active === false ? 'Reactivate' : 'Deactivate'}</button>
-            </span></div>`).join('')}</div>`}
+              <button class="btn small" data-role="${esc(u.uid)}" ${lone ? `disabled title="${why}"` : ''}>${u.role === 'admin' ? 'Make learner' : 'Make admin'}</button>
+              <button class="btn small ${u.active === false ? '' : 'danger'}" data-active="${esc(u.uid)}" ${u.active !== false && noOff ? `disabled title="${why}"` : ''}>${u.active === false ? 'Reactivate' : 'Deactivate'}</button>
+            </span></div>`;
+          }).join('')}</div>`}
       </section>
       <section class="tile"><h2>Add a user</h2>
         <form id="addUser" autocomplete="off">
