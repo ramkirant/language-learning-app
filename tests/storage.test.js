@@ -139,3 +139,42 @@ test('backup export and import round trip', () => {
   assert.throws(() => store.importBackup('not json'));
   assert.throws(() => store.importBackup('{"a":1}'));
 });
+
+test('categories can be created ahead of time, without items', () => {
+  fresh();
+  store.addCategory('fr', 'Food & Drink');
+  store.addCategory('fr', 'Numbers');
+  assert.deepEqual(store.categoryNames('fr'), ['Food & Drink', 'Numbers']);
+  assert.deepEqual(store.categories('fr'), [], 'practice only sees categories that have items');
+  assert.throws(() => store.addCategory('fr', 'numbers'), /already exists/);
+  assert.throws(() => store.addCategory('fr', '   '));
+  store.addItem('fr', { category: 'Numbers', target: 'un', native: 'one' });
+  assert.deepEqual(store.categoryNames('fr'), ['Food & Drink', 'Numbers'], 'no duplicates once it has items');
+  assert.deepEqual(store.categories('fr'), ['Numbers']);
+});
+
+test('category names are per language and sync as part of the language record', () => {
+  fresh();
+  const es = store.saveLanguage({ name: 'Spanish', speechCode: 'es-ES' });
+  store.addCategory('fr', 'Food');
+  assert.deepEqual(store.categoryNames(es.id), []);
+  store.setSession({ uid: 'adm', username: 'adm', role: 'admin' });
+  const { writes } = store.takeDirty('adm', true);
+  const fr = writes.find((w) => w.kind === 'languages' && w.rec.id === 'fr');
+  assert.deepEqual(fr.rec.categories, ['Food']);
+  store.saveLanguage({ id: 'fr', name: 'Francais' });
+  assert.deepEqual(store.getLanguage('fr').categories, ['Food'], 'editing a language keeps its categories');
+});
+
+test('only empty categories can be removed; renaming follows the extra list', () => {
+  fresh();
+  store.addCategory('fr', 'Travel');
+  store.addCategory('fr', 'Shopping');
+  store.addItem('fr', { category: 'Shopping', target: 'x', native: 'y' });
+  assert.throws(() => store.removeEmptyCategory('fr', 'Shopping'), /no items/);
+  store.removeEmptyCategory('fr', 'Travel');
+  assert.deepEqual(store.categoryNames('fr'), ['Shopping']);
+  store.addCategory('fr', 'Colors');
+  store.renameCategory('fr', 'Colors', 'Couleurs');
+  assert.deepEqual(store.categoryNames('fr'), ['Couleurs', 'Shopping']);
+});

@@ -205,11 +205,40 @@ export function deleteItem(id) {
   save();
 }
 
+// Categories that were created ahead of time (even with no items yet) live on the language record
+// as `categories`, so they sync with the language. `categories()` above only lists ones with items.
+export const categoryNames = (langId) => [...new Set([...categories(langId), ...(state.languages[langId]?.categories ?? [])])]
+  .sort((a, b) => a.localeCompare(b));
+
+function setExtraCategories(langId, list) {
+  const lang = state.languages[langId];
+  lang.categories = list;
+  stamp(lang);
+  state.dirty.languages[langId] = true;
+}
+
+export function addCategory(langId, name) {
+  const n = String(name ?? '').trim();
+  if (!n) throw new Error('Enter a category name.');
+  if (categoryNames(langId).some((c) => c.toLowerCase() === n.toLowerCase())) throw new Error('That category already exists.');
+  setExtraCategories(langId, [...(state.languages[langId].categories ?? []), n]);
+  save();
+  return n;
+}
+
+export function removeEmptyCategory(langId, name) {
+  if (itemsOf(langId).some((i) => i.category === name)) throw new Error('Only categories with no items can be removed.');
+  setExtraCategories(langId, (state.languages[langId].categories ?? []).filter((c) => c !== name));
+  save();
+}
+
 export function renameCategory(langId, from, to) {
   const name = to.trim();
   if (!name) return 0;
   let n = 0;
   for (const it of itemsOf(langId)) if (it.category === from) { it.category = name; putItem(it); n++; }
+  const extra = state.languages[langId]?.categories ?? [];
+  if (extra.includes(from)) setExtraCategories(langId, [...new Set(extra.map((c) => (c === from ? name : c)))]);
   save();
   return n;
 }

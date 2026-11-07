@@ -27,16 +27,24 @@ export function mount(root) {
 
   function draw() {
     root.innerHTML = `
-      <section class="tile"><h2>Add to ${esc(lang.flag)} ${esc(lang.name)}</h2>
-        <form id="addForm" autocomplete="off">
-          <label>Category<input type="text" name="category" list="cats" required placeholder="e.g. General Salutations" value="${esc(lastCategory)}"></label>
-          <datalist id="cats"></datalist>
+      <section class="tile"><details id="addBox"><summary>Add to ${esc(lang.flag)} ${esc(lang.name)}</summary>
+        <form id="addForm" autocomplete="off" style="margin-top:.6rem">
+          <label>Category<select name="category" required></select></label>
+          <p id="noCats" class="muted small" hidden>No categories yet - open <b>Add category</b> below and create one first.</p>
           <label>${esc(lang.name)}<input type="text" name="target" required></label>
           <label>${esc(lang.nativeName)}<input type="text" name="native" required></label>
           <label>Pronunciation (optional)<input type="text" name="pron"></label>
           <div class="btns"><button class="btn primary" type="submit">Save &amp; add another</button></div>
-        </form></section>
+        </form></details></section>
       <section class="tile">
+        <details id="catBox"><summary>Add category</summary>
+          <form id="catForm" class="row" autocomplete="off" style="margin-top:.5rem">
+            <input type="text" name="name" required placeholder="e.g. Food &amp; Drink" aria-label="New category name">
+            <button class="btn primary" type="submit" style="flex:0 0 auto">Add</button>
+          </form>
+          <div id="catList" class="small" style="margin-top:.6rem"></div></details></section>
+      <section class="tile"><details id="toolsBox"><summary>Quick add, import &amp; export</summary>
+        <div style="margin-top:.6rem">
         <details><summary>Quick add (paste several lines)</summary>
           <p class="muted small">One per line: <code>category ~|~ ${esc(lang.name)} ~|~ ${esc(lang.nativeName)} ~|~ pronunciation</code></p>
           <textarea id="bulk" rows="5" placeholder="General Salutations~|~Bonjour~|~Hello~|~bon-ZHOOR"></textarea>
@@ -50,7 +58,7 @@ export function mount(root) {
           <div class="btns"><button class="btn" id="csvImport" type="button">Import</button>
             <button class="btn" id="csvExport" type="button">Export CSV</button></div></details>
         ${lang.speechCode.startsWith('fr') ? '<div class="btns"><button class="btn" id="starter" type="button">Load starter French phrases</button></div>' : ''}
-      </section>
+        </div></details></section>
       <section class="tile"><h2 id="count"></h2>
         <div class="row"><input type="search" id="q" placeholder="Search..." value="${esc(query)}">
           <select id="catFilter" aria-label="Filter by category"></select></div><div id="list"></div></section>`;
@@ -58,9 +66,27 @@ export function mount(root) {
     refresh();
   }
 
+  // Keeps the item form's dropdown and the category list in step with the deck.
+  function renderCategoryUi() {
+    const names = store.categoryNames(lang.id);
+    const sel = root.querySelector('#addForm').elements.category;
+    const want = lastCategory;
+    sel.innerHTML = '<option value="" disabled>Select a category</option>' +
+      names.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    sel.value = names.includes(want) ? want : '';
+    root.querySelector('#noCats').hidden = names.length > 0;
+    const counts = new Map(store.itemsOf(lang.id).map((i) => [i.category, 0]));
+    for (const i of store.itemsOf(lang.id)) counts.set(i.category, counts.get(i.category) + 1);
+    root.querySelector('#catList').innerHTML = names.length ? names.map((c) => {
+      const n = counts.get(c) ?? 0;
+      return `<div class="list-item"><div class="main"><b>${esc(c)}</b><span class="muted small">${n} item${n === 1 ? '' : 's'}</span></div>
+        ${n === 0 ? `<button class="btn small danger" data-rm-cat="${esc(c)}">Remove</button>` : ''}</div>`;
+    }).join('') : '<span class="muted">No categories yet.</span>';
+  }
+
   function refresh() {
     const items = store.itemsOf(lang.id);
-    root.querySelector('#cats').innerHTML = store.categories(lang.id).map((c) => `<option value="${esc(c)}">`).join('');
+    renderCategoryUi();
     const cats = store.categories(lang.id);
     if (catFilter !== 'all' && !cats.includes(catFilter)) catFilter = 'all'; // category was renamed or emptied
     const optionsHtml = ['<option value="all">All categories</option>',
@@ -112,6 +138,23 @@ export function mount(root) {
       for (const n of ['target', 'native', 'pron']) f.elements[n].value = '';
       f.elements.target.focus();
       toast('Saved', 'success');
+      changed();
+    });
+
+    $('addForm').elements.category.addEventListener('change', (e) => { lastCategory = e.target.value; });
+    $('catForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      try {
+        lastCategory = store.addCategory(lang.id, e.target.elements.name.value);
+      } catch (err) { toast(err.message, 'error'); return; }
+      e.target.reset();
+      toast(`Category "${lastCategory}" added`, 'success');
+      changed();
+    });
+    $('catList').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-rm-cat]');
+      if (!b) return;
+      try { store.removeEmptyCategory(lang.id, b.dataset.rmCat); } catch (err) { toast(err.message, 'error'); return; }
       changed();
     });
 

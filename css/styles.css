@@ -12,7 +12,7 @@ body {
 }
 #app { max-width: 640px; margin: 0 auto; min-height: 100dvh; display: flex; flex-direction: column; }
 h1, h2, h3 { margin: 0 0 .5rem; }
-h2 { font-size: 1.15rem; } h3 { font-size: 1rem; }
+h2 { font-size: 1.15rem; font-weight: 700; line-height: 1.2; } h3 { font-size: 1rem; }
 button, input, select, textarea { font: inherit; color: inherit; }
 a { color: var(--accent-dark); }
 
@@ -165,3 +165,8 @@ details { margin-bottom: .6rem; } summary { cursor: pointer; font-weight: 700; p
   .uact { grid-column: auto; }
   .uhead .uact { display: block; }
 }
+
+/* collapsible tile headings use exactly the same type as tile headings (h2) */
+.tile > details { margin: 0; }
+.tile > details > summary { font-size: 1.15rem; font-weight: 700; line-height: 1.2; padding: .1rem 0; color: var(--ink); }
+.tile details details { margin-top: .4rem; }
