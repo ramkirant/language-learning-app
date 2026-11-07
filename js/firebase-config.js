@@ -9,5 +9,12 @@
 //   appId: '1:1234567890:web:abcdef',
 // };
 //
-// While this is null the app works fully offline as a local-only app.
-export const firebaseConfig = null;
+// If this is set to null the app works fully offline as a local-only app.
+export const firebaseConfig = {
+  apiKey: 'AIzaSyAGruVi-A4AvQ9uY-vokqp-yOXbSQWIw74',
+  authDomain: 'lingo-5f933.firebaseapp.com',
+  projectId: 'lingo-5f933',
+  storageBucket: 'lingo-5f933.firebasestorage.app',
+  messagingSenderId: '189805488937',
+  appId: '1:189805488937:web:a15adf1b9dda212292e538',
+};
