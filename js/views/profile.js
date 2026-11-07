@@ -27,7 +27,7 @@ export function mount(root) {
     if (!session) {
       return `<h2>Sign in to sync</h2>
         <form id="signIn" autocomplete="on">
-          <label>User id<input type="text" name="username" autocomplete="username" autocapitalize="off" required></label>
+          <label>User ID<input type="text" name="username" autocomplete="username" autocapitalize="off" required></label>
           <label>Password<input type="password" name="password" autocomplete="current-password" required></label>
           ${message ? `<p class="err-text">${esc(message)}</p>` : ''}
           <div class="btns"><button class="btn primary" type="submit" ${busy ? 'disabled' : ''}>${busy ? 'Signing in...' : 'Sign in'}</button></div>

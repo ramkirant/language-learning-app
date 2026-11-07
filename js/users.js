@@ -18,7 +18,7 @@ export async function listUsers() {
 // (the free plan has no server-side Admin SDK / Cloud Functions).
 export async function createUser({ username, password, role }) {
   const name = normalizeUsername(username);
-  if (!USERNAME_RE.test(name)) throw new Error('User id: 2-30 characters, lowercase letters, numbers, . _ -');
+  if (!USERNAME_RE.test(name)) throw new Error('User ID: 2-30 characters, lowercase letters, numbers, . _ -');
   if (String(password).length < 6) throw new Error('Password must be at least 6 characters.');
   const { appM, authM, fsM, db } = await getFirebase();
   const app2 = appM.getApps().find((a) => a.name === 'secondary') ?? appM.initializeApp(firebaseConfig, 'secondary');

@@ -35,12 +35,12 @@ export async function getFirebase() {
 export function friendlyError(e) {
   const code = e?.code ?? '';
   if (e instanceof AccountError) return e.message;
-  if (/invalid-credential|wrong-password|user-not-found|invalid-email|invalid-login/.test(code)) return 'Wrong user id or password.';
+  if (/invalid-credential|wrong-password|user-not-found|invalid-email|invalid-login/.test(code)) return 'Wrong user ID or password.';
   if (code.includes('too-many-requests')) return 'Too many attempts. Please wait a few minutes and try again.';
   if (code.includes('network') || code === 'unavailable' || /Failed to fetch|dynamically imported/.test(e?.message ?? '')) {
     return 'Cannot reach the server. Check your internet connection.';
   }
-  if (code.includes('email-already-in-use')) return 'That user id already exists. If it was deactivated, reactivate it in the list.';
+  if (code.includes('email-already-in-use')) return 'That user ID already exists. If it was deactivated, reactivate it in the list.';
   if (code.includes('weak-password')) return 'Password must be at least 6 characters.';
   if (code.includes('requires-recent-login')) return 'Please sign in again and retry.';
   if (code.includes('permission-denied')) return 'Not allowed. Your account may not be active or lacks admin rights.';
@@ -86,7 +86,7 @@ async function establishSession(user) {
 
 export async function signIn(username, password) {
   const name = normalizeUsername(username);
-  if (!USERNAME_RE.test(name)) throw new AccountError('Enter your user id (letters, numbers, . _ -).');
+  if (!USERNAME_RE.test(name)) throw new AccountError('Enter your user ID (letters, numbers, . _ -).');
   const { authM, auth } = await getFirebase();
   const cred = await authM.signInWithEmailAndPassword(auth, usernameToEmail(name), password);
   await establishSession(cred.user);

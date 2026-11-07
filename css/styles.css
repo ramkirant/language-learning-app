@@ -91,7 +91,8 @@ label > input, label > select, label > textarea { margin-top: .25rem; font-weigh
 .result.ok .verdict { color: var(--ok); } .result.bad .verdict { color: var(--bad); } .result.near .verdict { color: var(--warn); }
 .answer-text { font-size: 1.3rem; font-weight: 700; margin: .3rem 0; }
 .muted { color: var(--muted); } .small { font-size: .85rem; }
-.err-text { color: var(--bad); font-size: .9rem; }
+.err-text { color: var(--bad); font-size: .9rem; font-weight: 600; }
+.ok-text { color: var(--ok); font-size: .9rem; font-weight: 600; }
 .row { display: flex; gap: .6rem; align-items: center; }
 .row > * { flex: 1; }
 .toolbar { display: flex; gap: .5rem; margin-bottom: .8rem; align-items: center; }
@@ -145,3 +146,22 @@ details { margin-bottom: .6rem; } summary { cursor: pointer; font-weight: 700; p
 @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-9px); } 40% { transform: translateX(8px); }
   60% { transform: translateX(-6px); } 80% { transform: translateX(4px); } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+.check { display: flex; align-items: center; gap: .5rem; font-weight: 600; }
+.check input { width: auto; margin: 0; }
+
+/* users table */
+.urow { display: grid; grid-template-columns: minmax(0, 1fr) 4.2rem 4.6rem; align-items: center; gap: .3rem .5rem;
+  padding: .5rem 0; border-bottom: 1px solid var(--line); font-size: .9rem; }
+.urow:last-child { border-bottom: 0; }
+.uhead { font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding-top: 0; }
+.uhead .uact { display: none; }
+.uname { overflow-wrap: anywhere; }
+.urow .badge { justify-self: start; font-size: .65rem; padding: .05rem .45rem; }
+.uact { grid-column: 1 / -1; display: flex; gap: .4rem; justify-content: flex-end; }
+.uact .btn { padding: .25rem .55rem; font-size: .75rem; }
+@media (min-width: 520px) {
+  .urow { grid-template-columns: minmax(0, 1fr) 4.2rem 4.6rem auto; }
+  .uact { grid-column: auto; }
+  .uhead .uact { display: block; }
+}
