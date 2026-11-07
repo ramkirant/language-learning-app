@@ -15,6 +15,7 @@ const fields = (f) => ({
 export function mount(root) {
   const lang = store.activeLanguage();
   let query = '';
+  let catFilter = 'all';
   let editId = null;
   let renaming = null;
   let lastCategory = '';
@@ -51,7 +52,8 @@ export function mount(root) {
         ${lang.speechCode.startsWith('fr') ? '<div class="btns"><button class="btn" id="starter" type="button">Load starter French phrases</button></div>' : ''}
       </section>
       <section class="tile"><h2 id="count"></h2>
-        <input type="search" id="q" placeholder="Search..." value="${esc(query)}"><div id="list"></div></section>`;
+        <div class="row"><input type="search" id="q" placeholder="Search..." value="${esc(query)}">
+          <select id="catFilter" aria-label="Filter by category"></select></div><div id="list"></div></section>`;
     wire();
     refresh();
   }
@@ -59,9 +61,18 @@ export function mount(root) {
   function refresh() {
     const items = store.itemsOf(lang.id);
     root.querySelector('#cats').innerHTML = store.categories(lang.id).map((c) => `<option value="${esc(c)}">`).join('');
-    root.querySelector('#count').textContent = `Items (${items.length})`;
+    const cats = store.categories(lang.id);
+    if (catFilter !== 'all' && !cats.includes(catFilter)) catFilter = 'all'; // category was renamed or emptied
+    const optionsHtml = ['<option value="all">All categories</option>',
+      ...cats.map((c) => `<option value="${esc(c)}" ${c === catFilter ? 'selected' : ''}>${esc(c)}</option>`)].join('');
+    const sel = root.querySelector('#catFilter');
+    if (sel.dataset.html !== optionsHtml) { sel.innerHTML = optionsHtml; sel.dataset.html = optionsHtml; }
+    sel.value = catFilter;
     const q = query.trim().toLowerCase();
-    const shown = q ? items.filter((i) => `${i.category} ${i.target} ${i.native}`.toLowerCase().includes(q)) : items;
+    const shown = items.filter((i) => (catFilter === 'all' || i.category === catFilter)
+      && (!q || `${i.category} ${i.target} ${i.native}`.toLowerCase().includes(q)));
+    root.querySelector('#count').textContent = shown.length === items.length
+      ? `Items (${items.length})` : `Items (${shown.length} of ${items.length})`;
     const groups = new Map();
     for (const it of shown) groups.set(it.category, [...(groups.get(it.category) ?? []), it]);
     root.querySelector('#list').innerHTML = shown.length ? [...groups].map(([cat, list]) => `
@@ -105,6 +116,7 @@ export function mount(root) {
     });
 
     $('q').addEventListener('input', (e) => { query = e.target.value; refresh(); });
+    $('catFilter').addEventListener('change', (e) => { catFilter = e.target.value; refresh(); });
 
     const parseBulk = () => parseCsv($('bulk').value);
     $('bulkPreview').addEventListener('click', () => {
@@ -160,6 +172,7 @@ export function mount(root) {
       const f = e.target;
       if (f.dataset.renameForm) {
         store.renameCategory(lang.id, f.dataset.renameForm, f.elements.name.value);
+        if (catFilter === f.dataset.renameForm) catFilter = f.elements.name.value.trim(); // keep following the renamed category
         renaming = null;
         toast('Category renamed', 'success');
         changed();
